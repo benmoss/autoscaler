@@ -23,11 +23,22 @@ spec:
         - /cluster-autoscaler
         args:
         - --cloud-provider=clusterapi
+        - --v=4
+        - --kubeconfig=/etc/workload-kubeconfig/value
+        - --clusterapi-cloud-config-authoritative
+        volumeMounts:
+        - name: workload-kubeconfig
+          mountPath: "/etc/workload-kubeconfig"
+          readOnly: true
       serviceAccountName: cluster-autoscaler
       terminationGracePeriodSeconds: 10
       tolerations:
       - effect: NoSchedule
         key: node-role.kubernetes.io/master
+      volumes:
+      - name: workload-kubeconfig
+        secret:
+          secretName: bmo-kubeconfig
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1beta1
@@ -165,3 +176,11 @@ rules:
     - list
     - update
     - watch
+  - apiGroups:
+    - cluster.x-k8s.io
+    resources:
+    - machinedeployments/scale
+    - machinesets/scale
+    verbs:
+    - get
+    - update
