@@ -1,0 +1,3 @@
+[submodule "cluster-autoscaler/kube-scheduler"]
+	path = cluster-autoscaler/kube-scheduler
+	url = https://github.com/kubernetes/kube-scheduler.git

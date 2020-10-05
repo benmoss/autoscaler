@@ -72,7 +72,7 @@ replace k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.20.0
 
 replace k8s.io/kube-proxy => k8s.io/kube-proxy v0.20.0-alpha.1
 
-replace k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.20.0-alpha.1
+replace k8s.io/kube-scheduler => ./kube-scheduler
 
 replace k8s.io/kubectl => k8s.io/kubectl v0.20.0-alpha.1
 
