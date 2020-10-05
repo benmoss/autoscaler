@@ -1,3 +1,6 @@
 [submodule "cluster-autoscaler/kube-scheduler"]
 	path = cluster-autoscaler/kube-scheduler
 	url = https://github.com/kubernetes/kube-scheduler.git
+[submodule "cluster-autoscaler/kubernetes"]
+	path = cluster-autoscaler/kubernetes
+	url = https://github.com/kubernetes/kubernetes
