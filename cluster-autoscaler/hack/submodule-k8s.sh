@@ -22,7 +22,6 @@ cd ..
 
 go mod edit "-replace=k8s.io/kubernetes=./kubernetes"
 
-echo "???? " $MODS
 for MOD in "${MODS[@]}"; do
     go mod edit "-replace=${MOD}=./kubernetes/staging/src/${MOD}"
 done
