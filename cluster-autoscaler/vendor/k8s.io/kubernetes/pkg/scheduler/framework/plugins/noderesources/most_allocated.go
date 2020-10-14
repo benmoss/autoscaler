@@ -24,12 +24,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/kubernetes/pkg/scheduler/apis/config"
 	"k8s.io/kubernetes/pkg/scheduler/apis/config/validation"
-	"k8s.io/kubernetes/pkg/scheduler/framework"
+	framework "k8s.io/kubernetes/pkg/scheduler/framework/v1alpha1"
 )
 
 // MostAllocated is a score plugin that favors nodes with high allocation based on requested resources.
 type MostAllocated struct {
-	handle framework.Handle
+	handle framework.FrameworkHandle
 	resourceAllocationScorer
 }
 
@@ -63,7 +63,7 @@ func (ma *MostAllocated) ScoreExtensions() framework.ScoreExtensions {
 }
 
 // NewMostAllocated initializes a new plugin and returns it.
-func NewMostAllocated(maArgs runtime.Object, h framework.Handle) (framework.Plugin, error) {
+func NewMostAllocated(maArgs runtime.Object, h framework.FrameworkHandle) (framework.Plugin, error) {
 	args, ok := maArgs.(*config.NodeResourcesMostAllocatedArgs)
 	if !ok {
 		return nil, fmt.Errorf("want args to be of type NodeResourcesMostAllocatedArgs, got %T", args)

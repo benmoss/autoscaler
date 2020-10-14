@@ -231,11 +231,7 @@ func (kvh *kubeletVolumeHost) GetHostName() string {
 }
 
 func (kvh *kubeletVolumeHost) GetHostIP() (net.IP, error) {
-	hostIPs, err := kvh.kubelet.GetHostIPs()
-	if err != nil {
-		return nil, err
-	}
-	return hostIPs[0], err
+	return kvh.kubelet.GetHostIP()
 }
 
 func (kvh *kubeletVolumeHost) GetNodeAllocatable() (v1.ResourceList, error) {

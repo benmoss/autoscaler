@@ -26,7 +26,7 @@ import (
 	csilibplugins "k8s.io/csi-translation-lib/plugins"
 	v1helper "k8s.io/kubernetes/pkg/apis/core/v1/helper"
 	"k8s.io/kubernetes/pkg/features"
-	"k8s.io/kubernetes/pkg/scheduler/framework"
+	framework "k8s.io/kubernetes/pkg/scheduler/framework/v1alpha1"
 )
 
 // isCSIMigrationOn returns a boolean value indicating whether

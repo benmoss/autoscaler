@@ -140,7 +140,7 @@ func prepareForMount(mounter mount.Interface, deviceMountPath string) (bool, err
 // Mounts the device at the given path.
 // It is expected that prepareForMount has been called before.
 func doMount(mounter mount.Interface, devicePath, deviceMountPath, fsType string, options []string) error {
-	err := mounter.MountSensitiveWithoutSystemd(devicePath, deviceMountPath, fsType, options, nil)
+	err := mounter.Mount(devicePath, deviceMountPath, fsType, options)
 	if err != nil {
 		klog.Errorf("Failed to mount the volume at %s, device: %s, error: %s", deviceMountPath, devicePath, err.Error())
 		return err

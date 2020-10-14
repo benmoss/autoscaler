@@ -221,7 +221,7 @@ type Volumes interface {
 
 	// DiskIsAttached checks if a disk is attached to the given node.
 	// Assumption: If node doesn't exist, disk is not attached to the node.
-	DiskIsAttached(volPath string, nodeName k8stypes.NodeName) (bool, string, error)
+	DiskIsAttached(volPath string, nodeName k8stypes.NodeName) (bool, error)
 
 	// DisksAreAttached checks if a list disks are attached to the given node.
 	// Assumption: If node doesn't exist, disks are not attached to the node.
@@ -924,13 +924,6 @@ func (vs *VSphere) AttachDisk(vmDiskPath string, storagePolicyName string, nodeN
 			return "", err
 		}
 
-		// try and get canonical path for disk and if we can't throw error
-		vmDiskPath, err = getcanonicalVolumePath(ctx, vm.Datacenter, vmDiskPath)
-		if err != nil {
-			klog.Errorf("failed to get canonical path for %s on node %s: %v", vmDiskPath, convertToString(nodeName), err)
-			return "", err
-		}
-
 		diskUUID, err = vm.AttachDisk(ctx, vmDiskPath, &vclib.VolumeOptions{SCSIControllerType: vclib.PVSCSIControllerType, StoragePolicyName: storagePolicyName})
 		if err != nil {
 			klog.Errorf("Failed to attach disk: %s for node: %s. err: +%v", vmDiskPath, convertToString(nodeName), err)
@@ -1011,8 +1004,8 @@ func (vs *VSphere) DetachDisk(volPath string, nodeName k8stypes.NodeName) error 
 }
 
 // DiskIsAttached returns if disk is attached to the VM using controllers supported by the plugin.
-func (vs *VSphere) DiskIsAttached(volPath string, nodeName k8stypes.NodeName) (bool, string, error) {
-	diskIsAttachedInternal := func(volPath string, nodeName k8stypes.NodeName) (bool, string, error) {
+func (vs *VSphere) DiskIsAttached(volPath string, nodeName k8stypes.NodeName) (bool, error) {
+	diskIsAttachedInternal := func(volPath string, nodeName k8stypes.NodeName) (bool, error) {
 		var vSphereInstance string
 		if nodeName == "" {
 			vSphereInstance = vs.hostName
@@ -1025,30 +1018,25 @@ func (vs *VSphere) DiskIsAttached(volPath string, nodeName k8stypes.NodeName) (b
 		defer cancel()
 		vsi, err := vs.getVSphereInstance(nodeName)
 		if err != nil {
-			return false, volPath, err
+			return false, err
 		}
 		// Ensure client is logged in and session is valid
 		err = vs.nodeManager.vcConnect(ctx, vsi)
 		if err != nil {
-			return false, volPath, err
+			return false, err
 		}
 		vm, err := vs.getVMFromNodeName(ctx, nodeName)
 		if err != nil {
 			if err == vclib.ErrNoVMFound {
 				klog.Warningf("Node %q does not exist, vsphere CP will assume disk %v is not attached to it.", nodeName, volPath)
 				// make the disk as detached and return false without error.
-				return false, volPath, nil
+				return false, nil
 			}
 			klog.Errorf("Failed to get VM object for node: %q. err: +%v", vSphereInstance, err)
-			return false, volPath, err
+			return false, err
 		}
 
 		volPath = vclib.RemoveStorageClusterORFolderNameFromVDiskPath(volPath)
-		canonicalPath, pathFetchErr := getcanonicalVolumePath(ctx, vm.Datacenter, volPath)
-		// if canonicalPath is not empty string and pathFetchErr is nil then we can use canonical path to perform detach
-		if canonicalPath != "" && pathFetchErr == nil {
-			volPath = canonicalPath
-		}
 		attached, err := vm.IsDiskAttached(ctx, volPath)
 		if err != nil {
 			klog.Errorf("DiskIsAttached failed to determine whether disk %q is still attached on node %q",
@@ -1056,22 +1044,22 @@ func (vs *VSphere) DiskIsAttached(volPath string, nodeName k8stypes.NodeName) (b
 				vSphereInstance)
 		}
 		klog.V(4).Infof("DiskIsAttached result: %v and error: %q, for volume: %q", attached, err, volPath)
-		return attached, volPath, err
+		return attached, err
 	}
 	requestTime := time.Now()
-	isAttached, newVolumePath, err := diskIsAttachedInternal(volPath, nodeName)
+	isAttached, err := diskIsAttachedInternal(volPath, nodeName)
 	if err != nil {
 		if vclib.IsManagedObjectNotFoundError(err) {
 			err = vs.nodeManager.RediscoverNode(nodeName)
 			if err == vclib.ErrNoVMFound {
 				isAttached, err = false, nil
 			} else if err == nil {
-				isAttached, newVolumePath, err = diskIsAttachedInternal(volPath, nodeName)
+				isAttached, err = diskIsAttachedInternal(volPath, nodeName)
 			}
 		}
 	}
 	vclib.RecordvSphereMetric(vclib.OperationDiskIsAttached, requestTime, err)
-	return isAttached, newVolumePath, err
+	return isAttached, err
 }
 
 // DisksAreAttached returns if disks are attached to the VM using controllers supported by the plugin.
@@ -1512,7 +1500,7 @@ func (vs *VSphere) SecretAdded(obj interface{}) {
 		return
 	}
 
-	klog.V(4).Infof("refreshing node cache for secret: %s/%s", secret.Namespace, secret.Name)
+	klog.V(4).Infof("secret added: %+v", obj)
 	vs.refreshNodesForSecretChange()
 }
 
@@ -1536,7 +1524,7 @@ func (vs *VSphere) SecretUpdated(obj interface{}, newObj interface{}) {
 		return
 	}
 
-	klog.V(4).Infof("refreshing node cache for secret: %s/%s", secret.Namespace, secret.Name)
+	klog.V(4).Infof("secret updated: %+v", newObj)
 	vs.refreshNodesForSecretChange()
 }
 

@@ -262,23 +262,23 @@ func (kl *Kubelet) GetPodCgroupRoot() string {
 	return kl.containerManager.GetPodCgroupRoot()
 }
 
-// GetHostIPs returns host IPs or nil in case of error.
-func (kl *Kubelet) GetHostIPs() ([]net.IP, error) {
+// GetHostIP returns host IP or nil in case of error.
+func (kl *Kubelet) GetHostIP() (net.IP, error) {
 	node, err := kl.GetNode()
 	if err != nil {
 		return nil, fmt.Errorf("cannot get node: %v", err)
 	}
-	return utilnode.GetNodeHostIPs(node)
+	return utilnode.GetNodeHostIP(node)
 }
 
-// getHostIPsAnyWay attempts to return the host IPs from kubelet's nodeInfo, or
+// getHostIPAnyway attempts to return the host IP from kubelet's nodeInfo, or
 // the initialNode.
-func (kl *Kubelet) getHostIPsAnyWay() ([]net.IP, error) {
+func (kl *Kubelet) getHostIPAnyWay() (net.IP, error) {
 	node, err := kl.getNodeAnyWay()
 	if err != nil {
 		return nil, err
 	}
-	return utilnode.GetNodeHostIPs(node)
+	return utilnode.GetNodeHostIP(node)
 }
 
 // GetExtraSupplementalGroupsForPod returns a list of the extra

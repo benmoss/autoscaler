@@ -264,10 +264,7 @@ func (g *Cloud) InstanceExists(ctx context.Context, node *v1.Node) (bool, error)
 	providerID := node.Spec.ProviderID
 	if providerID == "" {
 		var err error
-		if providerID, err = cloudprovider.GetInstanceProviderID(ctx, g, types.NodeName(node.Name)); err != nil {
-			if err == cloudprovider.InstanceNotFound {
-				return false, nil
-			}
+		if providerID, err = g.InstanceID(ctx, types.NodeName(node.Name)); err != nil {
 			return false, err
 		}
 	}
@@ -282,7 +279,7 @@ func (g *Cloud) InstanceMetadata(ctx context.Context, node *v1.Node) (*cloudprov
 	providerID := node.Spec.ProviderID
 	if providerID == "" {
 		var err error
-		if providerID, err = cloudprovider.GetInstanceProviderID(ctx, g, types.NodeName(node.Name)); err != nil {
+		if providerID, err = g.InstanceID(ctx, types.NodeName(node.Name)); err != nil {
 			return nil, err
 		}
 	}

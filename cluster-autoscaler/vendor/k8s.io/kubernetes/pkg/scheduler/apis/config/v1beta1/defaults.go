@@ -195,18 +195,23 @@ func SetDefaults_VolumeBindingArgs(obj *v1beta1.VolumeBindingArgs) {
 }
 
 func SetDefaults_PodTopologySpreadArgs(obj *v1beta1.PodTopologySpreadArgs) {
-	if feature.DefaultFeatureGate.Enabled(features.DefaultPodTopologySpread) {
-		if obj.DefaultingType == "" {
-			// TODO(#94008): Always default to System in v1beta2.
-			if len(obj.DefaultConstraints) != 0 {
-				obj.DefaultingType = v1beta1.ListDefaulting
-			} else {
-				obj.DefaultingType = v1beta1.SystemDefaulting
-			}
-		}
+	if !feature.DefaultFeatureGate.Enabled(features.DefaultPodTopologySpread) {
+		// When feature is disabled, the default spreading is done by legacy
+		// SelectorSpread plugin.
 		return
 	}
-	if obj.DefaultingType == "" {
-		obj.DefaultingType = v1beta1.ListDefaulting
+	if obj.DefaultConstraints == nil {
+		obj.DefaultConstraints = []corev1.TopologySpreadConstraint{
+			{
+				TopologyKey:       corev1.LabelHostname,
+				WhenUnsatisfiable: corev1.ScheduleAnyway,
+				MaxSkew:           3,
+			},
+			{
+				TopologyKey:       corev1.LabelZoneFailureDomainStable,
+				WhenUnsatisfiable: corev1.ScheduleAnyway,
+				MaxSkew:           5,
+			},
+		}
 	}
 }

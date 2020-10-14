@@ -35,7 +35,6 @@ import (
 
 	"k8s.io/klog/v2"
 	utilio "k8s.io/utils/io"
-	utilnet "k8s.io/utils/net"
 )
 
 var (
@@ -59,7 +58,7 @@ const (
 type Configurer struct {
 	recorder record.EventRecorder
 	nodeRef  *v1.ObjectReference
-	nodeIPs  []net.IP
+	nodeIP   net.IP
 
 	// If non-nil, use this for container DNS server.
 	clusterDNS []net.IP
@@ -72,11 +71,11 @@ type Configurer struct {
 }
 
 // NewConfigurer returns a DNS configurer for launching pods.
-func NewConfigurer(recorder record.EventRecorder, nodeRef *v1.ObjectReference, nodeIPs []net.IP, clusterDNS []net.IP, clusterDomain, resolverConfig string) *Configurer {
+func NewConfigurer(recorder record.EventRecorder, nodeRef *v1.ObjectReference, nodeIP net.IP, clusterDNS []net.IP, clusterDomain, resolverConfig string) *Configurer {
 	return &Configurer{
 		recorder:       recorder,
 		nodeRef:        nodeRef,
-		nodeIPs:        nodeIPs,
+		nodeIP:         nodeIP,
 		clusterDNS:     clusterDNS,
 		ClusterDomain:  clusterDomain,
 		ResolverConfig: resolverConfig,
@@ -374,15 +373,11 @@ func (c *Configurer) GetPodDNS(pod *v1.Pod) (*runtimeapi.DNSConfig, error) {
 		// local machine". A nameserver setting of localhost is equivalent to
 		// this documented behavior.
 		if c.ResolverConfig == "" {
-			for _, nodeIP := range c.nodeIPs {
-				if utilnet.IsIPv6(nodeIP) {
-					dnsConfig.Servers = append(dnsConfig.Servers, "::1")
-				} else {
-					dnsConfig.Servers = append(dnsConfig.Servers, "127.0.0.1")
-				}
-			}
-			if len(dnsConfig.Servers) == 0 {
-				dnsConfig.Servers = append(dnsConfig.Servers, "127.0.0.1")
+			switch {
+			case c.nodeIP == nil || c.nodeIP.To4() != nil:
+				dnsConfig.Servers = []string{"127.0.0.1"}
+			case c.nodeIP.To16() != nil:
+				dnsConfig.Servers = []string{"::1"}
 			}
 			dnsConfig.Searches = []string{"."}
 		}

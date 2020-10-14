@@ -634,7 +634,6 @@ const (
 
 	// owner: @RenaudWasTaken @dashpole
 	// alpha: v1.19
-	// beta: v1.20
 	//
 	// Disables Accelerator Metrics Collected by Kubelet
 	DisableAcceleratorUsageMetrics featuregate.Feature = "DisableAcceleratorUsageMetrics"
@@ -734,7 +733,7 @@ var defaultKubernetesFeatureGates = map[featuregate.Feature]featuregate.FeatureS
 	SetHostnameAsFQDN:                              {Default: false, PreRelease: featuregate.Alpha},
 	WinOverlay:                                     {Default: true, PreRelease: featuregate.Beta},
 	WinDSR:                                         {Default: false, PreRelease: featuregate.Alpha},
-	DisableAcceleratorUsageMetrics:                 {Default: true, PreRelease: featuregate.Beta},
+	DisableAcceleratorUsageMetrics:                 {Default: false, PreRelease: featuregate.Alpha},
 
 	// inherited features from generic apiserver, relisted here to get a conflict if it is changed
 	// unintentionally on either side:

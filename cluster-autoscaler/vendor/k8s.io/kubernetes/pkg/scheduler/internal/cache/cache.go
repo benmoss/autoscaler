@@ -27,7 +27,7 @@ import (
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/features"
-	"k8s.io/kubernetes/pkg/scheduler/framework"
+	framework "k8s.io/kubernetes/pkg/scheduler/framework/v1alpha1"
 	"k8s.io/kubernetes/pkg/scheduler/metrics"
 )
 
@@ -196,8 +196,6 @@ func (cache *schedulerCache) Dump() *Dump {
 
 // UpdateSnapshot takes a snapshot of cached NodeInfo map. This is called at
 // beginning of every scheduling cycle.
-// The snapshot only includes Nodes that are not deleted at the time this function is called.
-// nodeinfo.Node() is guaranteed to be not nil for all the nodes in the snapshot.
 // This function tracks generation number of NodeInfo and updates only the
 // entries of an existing snapshot that have changed after the snapshot was taken.
 func (cache *schedulerCache) UpdateSnapshot(nodeSnapshot *Snapshot) error {
@@ -258,10 +256,7 @@ func (cache *schedulerCache) UpdateSnapshot(nodeSnapshot *Snapshot) error {
 		nodeSnapshot.generation = cache.headNode.info.Generation
 	}
 
-	// Comparing to pods in nodeTree.
-	// Deleted nodes get removed from the tree, but they might remain in the nodes map
-	// if they still have non-deleted Pods.
-	if len(nodeSnapshot.nodeInfoMap) > cache.nodeTree.numNodes {
+	if len(nodeSnapshot.nodeInfoMap) > len(cache.nodes) {
 		cache.removeDeletedNodesFromSnapshot(nodeSnapshot)
 		updateAllLists = true
 	}
@@ -323,12 +318,12 @@ func (cache *schedulerCache) updateNodeInfoSnapshotList(snapshot *Snapshot, upda
 
 // If certain nodes were deleted after the last snapshot was taken, we should remove them from the snapshot.
 func (cache *schedulerCache) removeDeletedNodesFromSnapshot(snapshot *Snapshot) {
-	toDelete := len(snapshot.nodeInfoMap) - cache.nodeTree.numNodes
+	toDelete := len(snapshot.nodeInfoMap) - len(cache.nodes)
 	for name := range snapshot.nodeInfoMap {
 		if toDelete <= 0 {
 			break
 		}
-		if n, ok := cache.nodes[name]; !ok || n.info.Node() == nil {
+		if _, ok := cache.nodes[name]; !ok {
 			delete(snapshot.nodeInfoMap, name)
 			toDelete--
 		}

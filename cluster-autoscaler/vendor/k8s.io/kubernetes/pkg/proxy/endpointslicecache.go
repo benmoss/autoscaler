@@ -80,7 +80,7 @@ type endpointInfo struct {
 }
 
 // spToEndpointMap stores groups Endpoint objects by ServicePortName and
-// IP address.
+// EndpointSlice name.
 type spToEndpointMap map[ServicePortName]map[string]Endpoint
 
 // NewEndpointSliceCache initializes an EndpointSliceCache.

@@ -13,51 +13,51 @@ go_library(
         "//staging/src/k8s.io/api/core/v1:go_default_library",
     ] + select({
         "@io_bazel_rules_go//go/platform:aix": [
-            "//staging/src/k8s.io/kubelet/pkg/apis/stats/v1alpha1:go_default_library",
+            "//pkg/kubelet/apis/stats/v1alpha1:go_default_library",
         ],
         "@io_bazel_rules_go//go/platform:android": [
+            "//pkg/kubelet/apis/stats/v1alpha1:go_default_library",
             "//staging/src/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
-            "//staging/src/k8s.io/kubelet/pkg/apis/stats/v1alpha1:go_default_library",
         ],
         "@io_bazel_rules_go//go/platform:darwin": [
-            "//staging/src/k8s.io/kubelet/pkg/apis/stats/v1alpha1:go_default_library",
+            "//pkg/kubelet/apis/stats/v1alpha1:go_default_library",
         ],
         "@io_bazel_rules_go//go/platform:dragonfly": [
-            "//staging/src/k8s.io/kubelet/pkg/apis/stats/v1alpha1:go_default_library",
+            "//pkg/kubelet/apis/stats/v1alpha1:go_default_library",
         ],
         "@io_bazel_rules_go//go/platform:freebsd": [
-            "//staging/src/k8s.io/kubelet/pkg/apis/stats/v1alpha1:go_default_library",
+            "//pkg/kubelet/apis/stats/v1alpha1:go_default_library",
         ],
         "@io_bazel_rules_go//go/platform:illumos": [
-            "//staging/src/k8s.io/kubelet/pkg/apis/stats/v1alpha1:go_default_library",
+            "//pkg/kubelet/apis/stats/v1alpha1:go_default_library",
         ],
         "@io_bazel_rules_go//go/platform:ios": [
-            "//staging/src/k8s.io/kubelet/pkg/apis/stats/v1alpha1:go_default_library",
+            "//pkg/kubelet/apis/stats/v1alpha1:go_default_library",
         ],
         "@io_bazel_rules_go//go/platform:js": [
-            "//staging/src/k8s.io/kubelet/pkg/apis/stats/v1alpha1:go_default_library",
+            "//pkg/kubelet/apis/stats/v1alpha1:go_default_library",
         ],
         "@io_bazel_rules_go//go/platform:linux": [
+            "//pkg/kubelet/apis/stats/v1alpha1:go_default_library",
             "//staging/src/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
-            "//staging/src/k8s.io/kubelet/pkg/apis/stats/v1alpha1:go_default_library",
         ],
         "@io_bazel_rules_go//go/platform:nacl": [
-            "//staging/src/k8s.io/kubelet/pkg/apis/stats/v1alpha1:go_default_library",
+            "//pkg/kubelet/apis/stats/v1alpha1:go_default_library",
         ],
         "@io_bazel_rules_go//go/platform:netbsd": [
-            "//staging/src/k8s.io/kubelet/pkg/apis/stats/v1alpha1:go_default_library",
+            "//pkg/kubelet/apis/stats/v1alpha1:go_default_library",
         ],
         "@io_bazel_rules_go//go/platform:openbsd": [
-            "//staging/src/k8s.io/kubelet/pkg/apis/stats/v1alpha1:go_default_library",
+            "//pkg/kubelet/apis/stats/v1alpha1:go_default_library",
         ],
         "@io_bazel_rules_go//go/platform:plan9": [
-            "//staging/src/k8s.io/kubelet/pkg/apis/stats/v1alpha1:go_default_library",
+            "//pkg/kubelet/apis/stats/v1alpha1:go_default_library",
         ],
         "@io_bazel_rules_go//go/platform:solaris": [
-            "//staging/src/k8s.io/kubelet/pkg/apis/stats/v1alpha1:go_default_library",
+            "//pkg/kubelet/apis/stats/v1alpha1:go_default_library",
         ],
         "@io_bazel_rules_go//go/platform:windows": [
-            "//staging/src/k8s.io/kubelet/pkg/apis/stats/v1alpha1:go_default_library",
+            "//pkg/kubelet/apis/stats/v1alpha1:go_default_library",
         ],
         "//conditions:default": [],
     }),

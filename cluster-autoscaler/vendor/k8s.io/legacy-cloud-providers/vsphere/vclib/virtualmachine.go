@@ -168,6 +168,7 @@ func (vm *VirtualMachine) AttachDisk(ctx context.Context, vmDiskPath string, vol
 
 // DetachDisk detaches the disk specified by vmDiskPath
 func (vm *VirtualMachine) DetachDisk(ctx context.Context, vmDiskPath string) error {
+	vmDiskPath = RemoveStorageClusterORFolderNameFromVDiskPath(vmDiskPath)
 	device, err := vm.getVirtualDeviceByPath(ctx, vmDiskPath)
 	if err != nil {
 		klog.Errorf("Disk ID not found for VM: %q with diskPath: %q", vm.InventoryPath, vmDiskPath)

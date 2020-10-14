@@ -88,7 +88,6 @@ func SetObjectDefaults_EndpointsList(in *v1.EndpointsList) {
 func SetObjectDefaults_EphemeralContainers(in *v1.EphemeralContainers) {
 	for i := range in.EphemeralContainers {
 		a := &in.EphemeralContainers[i]
-		SetDefaults_EphemeralContainer(a)
 		for j := range a.EphemeralContainerCommon.Ports {
 			b := &a.EphemeralContainerCommon.Ports[j]
 			SetDefaults_ContainerPort(b)
@@ -380,7 +379,6 @@ func SetObjectDefaults_Pod(in *v1.Pod) {
 	}
 	for i := range in.Spec.EphemeralContainers {
 		a := &in.Spec.EphemeralContainers[i]
-		SetDefaults_EphemeralContainer(a)
 		for j := range a.EphemeralContainerCommon.Ports {
 			b := &a.EphemeralContainerCommon.Ports[j]
 			SetDefaults_ContainerPort(b)
@@ -594,7 +592,6 @@ func SetObjectDefaults_PodTemplate(in *v1.PodTemplate) {
 	}
 	for i := range in.Template.Spec.EphemeralContainers {
 		a := &in.Template.Spec.EphemeralContainers[i]
-		SetDefaults_EphemeralContainer(a)
 		for j := range a.EphemeralContainerCommon.Ports {
 			b := &a.EphemeralContainerCommon.Ports[j]
 			SetDefaults_ContainerPort(b)
@@ -810,7 +807,6 @@ func SetObjectDefaults_ReplicationController(in *v1.ReplicationController) {
 		}
 		for i := range in.Spec.Template.Spec.EphemeralContainers {
 			a := &in.Spec.Template.Spec.EphemeralContainers[i]
-			SetDefaults_EphemeralContainer(a)
 			for j := range a.EphemeralContainerCommon.Ports {
 				b := &a.EphemeralContainerCommon.Ports[j]
 				SetDefaults_ContainerPort(b)

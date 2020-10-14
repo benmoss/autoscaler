@@ -35,11 +35,11 @@ import (
 	"k8s.io/client-go/kubernetes"
 	corelisters "k8s.io/client-go/listers/core/v1"
 	policylisters "k8s.io/client-go/listers/policy/v1beta1"
-	corev1helpers "k8s.io/component-helpers/scheduling/corev1"
 	extenderv1 "k8s.io/kube-scheduler/extender/v1"
+	podutil "k8s.io/kubernetes/pkg/api/v1/pod"
 	kubefeatures "k8s.io/kubernetes/pkg/features"
 	"k8s.io/kubernetes/pkg/scheduler/core"
-	"k8s.io/kubernetes/pkg/scheduler/framework"
+	framework "k8s.io/kubernetes/pkg/scheduler/framework/v1alpha1"
 	"k8s.io/kubernetes/pkg/scheduler/internal/parallelize"
 	"k8s.io/kubernetes/pkg/scheduler/metrics"
 	"k8s.io/kubernetes/pkg/scheduler/util"
@@ -52,7 +52,7 @@ const (
 
 // DefaultPreemption is a PostFilter plugin implements the preemption logic.
 type DefaultPreemption struct {
-	fh        framework.Handle
+	fh        framework.FrameworkHandle
 	podLister corelisters.PodLister
 	pdbLister policylisters.PodDisruptionBudgetLister
 }
@@ -65,7 +65,7 @@ func (pl *DefaultPreemption) Name() string {
 }
 
 // New initializes a new plugin and returns it.
-func New(_ runtime.Object, fh framework.Handle) (framework.Plugin, error) {
+func New(_ runtime.Object, fh framework.FrameworkHandle) (framework.Plugin, error) {
 	pl := DefaultPreemption{
 		fh:        fh,
 		podLister: fh.SharedInformerFactory().Core().V1().Pods().Lister(),
@@ -79,12 +79,13 @@ func (pl *DefaultPreemption) PostFilter(ctx context.Context, state *framework.Cy
 	preemptionStartTime := time.Now()
 	defer func() {
 		metrics.PreemptionAttempts.Inc()
-		metrics.DeprecatedSchedulingAlgorithmPreemptionEvaluationDuration.Observe(metrics.SinceInSeconds(preemptionStartTime))
+		metrics.SchedulingAlgorithmPreemptionEvaluationDuration.Observe(metrics.SinceInSeconds(preemptionStartTime))
+		metrics.DeprecatedSchedulingDuration.WithLabelValues(metrics.PreemptionEvaluation).Observe(metrics.SinceInSeconds(preemptionStartTime))
 	}()
 
 	nnn, err := pl.preempt(ctx, state, pod, m)
 	if err != nil {
-		return nil, framework.AsStatus(err)
+		return nil, framework.NewStatus(framework.Error, err.Error())
 	}
 	if nnn == "" {
 		return nil, framework.NewStatus(framework.Unschedulable)
@@ -206,9 +207,9 @@ func PodEligibleToPreemptOthers(pod *v1.Pod, nodeInfos framework.NodeInfoLister,
 		}
 
 		if nodeInfo, _ := nodeInfos.Get(nomNodeName); nodeInfo != nil {
-			podPriority := corev1helpers.PodPriority(pod)
+			podPriority := podutil.GetPodPriority(pod)
 			for _, p := range nodeInfo.Pods {
-				if p.Pod.DeletionTimestamp != nil && corev1helpers.PodPriority(p.Pod) < podPriority {
+				if p.Pod.DeletionTimestamp != nil && podutil.GetPodPriority(p.Pod) < podPriority {
 					// There is a terminating pod on the nominated node.
 					return false
 				}
@@ -392,7 +393,7 @@ func pickOneNodeForPreemption(nodesToVictims map[string]*extenderv1.Victims) str
 		node := minNodes1[i]
 		victims := nodesToVictims[node]
 		// highestPodPriority is the highest priority among the victims on this node.
-		highestPodPriority := corev1helpers.PodPriority(victims.Pods[0])
+		highestPodPriority := podutil.GetPodPriority(victims.Pods[0])
 		if highestPodPriority < minHighestPriority {
 			minHighestPriority = highestPodPriority
 			lenNodes2 = 0
@@ -418,7 +419,7 @@ func pickOneNodeForPreemption(nodesToVictims map[string]*extenderv1.Victims) str
 			// needed so that a node with a few pods with negative priority is not
 			// picked over a node with a smaller number of pods with the same negative
 			// priority (and similar scenarios).
-			sumPriorities += int64(corev1helpers.PodPriority(pod)) + int64(math.MaxInt32+1)
+			sumPriorities += int64(podutil.GetPodPriority(pod)) + int64(math.MaxInt32+1)
 		}
 		if sumPriorities < minSumPriorities {
 			minSumPriorities = sumPriorities
@@ -525,9 +526,9 @@ func selectVictimsOnNode(
 	}
 	// As the first step, remove all the lower priority pods from the node and
 	// check if the given pod can be scheduled.
-	podPriority := corev1helpers.PodPriority(pod)
+	podPriority := podutil.GetPodPriority(pod)
 	for _, p := range nodeInfo.Pods {
-		if corev1helpers.PodPriority(p.Pod) < podPriority {
+		if podutil.GetPodPriority(p.Pod) < podPriority {
 			potentialVictims = append(potentialVictims, p.Pod)
 			if err := removePod(p.Pod); err != nil {
 				return nil, 0, false
@@ -596,7 +597,7 @@ func selectVictimsOnNode(
 // - Evict the victim pods
 // - Reject the victim pods if they are in waitingPod map
 // - Clear the low-priority pods' nominatedNodeName status if needed
-func PrepareCandidate(c Candidate, fh framework.Handle, cs kubernetes.Interface, pod *v1.Pod) error {
+func PrepareCandidate(c Candidate, fh framework.FrameworkHandle, cs kubernetes.Interface, pod *v1.Pod) error {
 	for _, victim := range c.Victims().Pods {
 		if err := util.DeletePod(cs, victim); err != nil {
 			klog.Errorf("Error preempting pod %v/%v: %v", victim.Namespace, victim.Name, err)
@@ -639,9 +640,9 @@ func getLowerPriorityNominatedPods(pn framework.PodNominator, pod *v1.Pod, nodeN
 	}
 
 	var lowerPriorityPods []*v1.Pod
-	podPriority := corev1helpers.PodPriority(pod)
+	podPriority := podutil.GetPodPriority(pod)
 	for _, p := range pods {
-		if corev1helpers.PodPriority(p) < podPriority {
+		if podutil.GetPodPriority(p) < podPriority {
 			lowerPriorityPods = append(lowerPriorityPods, p)
 		}
 	}

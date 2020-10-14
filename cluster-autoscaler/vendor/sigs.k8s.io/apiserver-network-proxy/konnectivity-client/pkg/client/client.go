@@ -51,12 +51,6 @@ type grpcTunnel struct {
 	connsLock       sync.RWMutex
 }
 
-type clientConn interface {
-	Close() error
-}
-
-var _ clientConn = &grpc.ClientConn{}
-
 // CreateSingleUseGrpcTunnel creates a Tunnel to dial to a remote server through a
 // gRPC based proxy service.
 // Currently, a single tunnel supports a single connection, and the tunnel is closed when the connection is terminated
@@ -85,7 +79,7 @@ func CreateSingleUseGrpcTunnel(address string, opts ...grpc.DialOption) (Tunnel,
 	return tunnel, nil
 }
 
-func (t *grpcTunnel) serve(c clientConn) {
+func (t *grpcTunnel) serve(c *grpc.ClientConn) {
 	defer c.Close()
 
 	for {
