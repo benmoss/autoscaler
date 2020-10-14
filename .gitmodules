@@ -1,0 +1,3 @@
+[submodule "cluster-autoscaler/kubernetes"]
+	path = cluster-autoscaler/kubernetes
+	url = https://github.com/kubernetes/kubernetes
